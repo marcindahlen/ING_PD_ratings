@@ -18,6 +18,14 @@ class Optiparm(object):
             bounds = self.get_class_bounds(i)
             self.dummy_classes[i] = self.datastorage.data[bounds[0]:bounds[1]]
 
+    def write_input(self):
+        for i, elem in enumerate(self.dummy_classes):
+            count = len(elem)
+            lowest = min(elem, key=lambda x: x.pd_value)
+            highest = max(elem, key=lambda x: x.pd_value)
+            observed = sum(entry.pd_value for entry in elem) / count
+            print(f"{i+1:3} | {count:6} | {lowest.pd_value:4.8f} | {highest.pd_value:4.8f} | {observed:4.8f}")
+
     def write_output(self):
         output = self.give_output()
 
@@ -25,8 +33,8 @@ class Optiparm(object):
             count = len(elem)
             lowest = min(elem, key=lambda x: x.pd_value)
             highest = max(elem, key=lambda x: x.pd_value)
-            observed = reduce(lambda x, y: x.pd_value + y.pd_value, elem) / count
-            print(f"{i:3} | {count:6} | {lowest:10} | {highest:10} | {observed:10}")
+            observed = sum(entry.pd_value for entry in elem) / count
+            print(f"{i+1:3} | {count:6} | {lowest.pd_value:4.8f} | {highest.pd_value:4.8f} | {observed:4.8f}")
 
     def give_output(self):
         finish_flag = False
