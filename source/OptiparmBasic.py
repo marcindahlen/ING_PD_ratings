@@ -1,4 +1,5 @@
 import math
+from functools import reduce
 
 from utils import variables
 from source.DataStorage import DataStorage
@@ -7,20 +8,71 @@ class Optiparm(object):
     def __init__(self):
         self.results = []
         self.classes = range(1, variables.classes_no + 1)
+        self.dummy_classes = [[] for c in self.classes]
+        self.output_classes = []
         self.datastorage = DataStorage()
         self.datastorage.load_data()
         self.datastorage.sort_data()
 
     def init_classes(self):
-        entries_amount = len(self.datastorage)
-        for i in range(entries_amount):
-            self.datastorage.data[i].dummy_value = self.get_class(i)
+        for i, c in enumerate(self.classes):
+            bounds = self.get_class_bounds(i)
+            self.dummy_classes[i].append(self.datastorage.data[bounds[0]:bounds[1]])
 
-    def perform_f_tests(self):
-        pass
+    def write_output(self):
+        output = self.give_output()
+
+        for i, elem in enumerate(output):
+            count = len(elem)
+            lowest = min(elem, key=lambda x: x.pd_value)
+            highest = max(elem, key=lambda x: x.pd_value)
+            observed = reduce(lambda x, y: x.pd_value + y.pd_value, elem) / count
+            print(f"{i:3} | {count:6} | {lowest:10} | {highest:10} | {observed:10}")
 
     def give_output(self):
-        pass
+        finish_flag = False
+        considered_classes = self.dummy_classes
+        while not finish_flag:
+            finish_flag = True
+            helper_list = []
+            pair_scores = []
+            for i in range(len(considered_classes) - 1):
+                pair_scores.append(self.get_f_test_score(considered_classes[i], considered_classes[i+1]))
+            lowest_test_score = min(pair_scores)
 
-    def get_class(self, i):
-        return math.floor(i / variables.classes_no) + 1
+            if lowest_test_score < variables.confidence_interval:
+                finish_flag = False
+                helper_list = self.concacenate_classes(considered_classes, pair_scores, lowest_test_score)
+            else:
+                helper_list = considered_classes
+
+            considered_classes = helper_list
+
+        return considered_classes
+
+    def concacenate_classes(self, considered_classes: list, pair_scores: list, lowest_test_score: float) -> list:
+        output_list = []
+        concat_index = pair_scores.index(lowest_test_score)
+        output_list.append(considered_classes[:concat_index])
+        new_class = considered_classes[concat_index] + considered_classes[concat_index + 1]
+        output_list.append(new_class)
+        output_list.append(considered_classes[concat_index + 1:])
+
+        return output_list
+
+    def get_class_bounds(self, i: int) -> tuple:
+        return i * variables.classes_no, i * variables.classes_no + variables.classes_no
+
+    def get_f_test_score(self, class_a: list, class_b: list) -> float:
+        return self.get_variance(class_a) / self.get_variance(class_b)
+
+    def get_mean(self, sample: list) -> float:
+        length = len(sample)
+        the_sum = reduce(lambda x, y: x.pd_value + y.pd_value, sample)
+        return the_sum / length
+
+    def get_variance(self, sample: list) -> float:
+        length = len(sample)
+        mean = self.get_mean(sample)
+        altered_sum = sum(map(lambda x: pow(x.pd_value - mean, 2)), sample)
+        return altered_sum / (length - 1)
