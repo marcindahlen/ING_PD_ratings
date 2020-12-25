@@ -1,4 +1,4 @@
-datafile = "../../pd_model.csv"
+datafile = "../pd_model.csv"
 
 classes_no = 50
 

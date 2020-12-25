@@ -17,7 +17,7 @@ class Optiparm(object):
     def init_classes(self):
         for i, c in enumerate(self.classes):
             bounds = self.get_class_bounds(i)
-            self.dummy_classes[i].append(self.datastorage.data[bounds[0]:bounds[1]])
+            self.dummy_classes[i] = self.datastorage.data[bounds[0]:bounds[1]]
 
     def write_output(self):
         output = self.give_output()
