@@ -1,4 +1,3 @@
-import math
 from functools import reduce
 
 from utils import variables
@@ -51,13 +50,11 @@ class Optiparm(object):
         return considered_classes
 
     def concacenate_classes(self, considered_classes: list, pair_scores: list, lowest_test_score: float) -> list:
-        output_list = []
         concat_index = pair_scores.index(lowest_test_score)
-        output_list.append(considered_classes[:concat_index])
+        output_list = considered_classes[:concat_index]
         new_class = considered_classes[concat_index] + considered_classes[concat_index + 1]
         output_list.append(new_class)
-        output_list.append(considered_classes[concat_index + 1:])
-
+        output_list.extend(considered_classes[concat_index + 2:])
         return output_list
 
     def get_class_bounds(self, i: int) -> tuple:
@@ -68,11 +65,11 @@ class Optiparm(object):
 
     def get_mean(self, sample: list) -> float:
         length = len(sample)
-        the_sum = reduce(lambda x, y: x.pd_value + y.pd_value, sample)
+        the_sum = sum(entry.pd_value for entry in sample)
         return the_sum / length
 
     def get_variance(self, sample: list) -> float:
         length = len(sample)
         mean = self.get_mean(sample)
-        altered_sum = sum(map(lambda x: pow(x.pd_value - mean, 2)), sample)
+        altered_sum = sum(map(lambda x: pow(x.pd_value - mean, 2), sample))
         return altered_sum / (length - 1)
